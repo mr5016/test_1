@@ -5,12 +5,32 @@
   <title>趣味 | 松本崚佑</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: "Noto Sans JP", sans-serif; margin: 0; background: #fafafa; color:#333;}
-    header, footer { background:#18bc9c; color:#fff; text-align:center; padding:1rem 0;}
-    main { max-width:960px; margin:2rem auto; padding:0 1rem;}
-    h1 { margin-top:0; font-size:2rem;}
-    section { background:#fff; padding:1.5rem 2rem; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,.05); margin-bottom:2rem;}
+  body { font-family: "Noto Sans JP", sans-serif; margin: 0; background: #fafafa; color:#333; }
+    header, footer { background:#18bc9c; color:#fff; text-align:center; padding:1rem 0; }
+    main { max-width:960px; margin:2rem auto; padding:0 1rem; }
+    h1 { margin-top:0; font-size:2rem; }
+    section { background:#fff; padding:1.5rem 2rem; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,.05); margin-bottom:2rem; }
     img { max-width:100%; border-radius:6px; }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr); /* 2 列固定 */
+      gap: 1rem;                              /* 画像の間隔 */
+    }
+
+    .gallery-grid img {
+      width: 100%;        /* 列幅いっぱいに広げる */
+      height: 180px;      /* 好みの高さに。180〜220px くらいが見栄え◎ */
+      object-fit: cover;  /* 切り抜きで縦横比をそろえる */
+      border-radius: 6px; /* 角丸（任意） */
+    }
+
+    /* ▼ ここを修正 */
+    @media (max-width: 600px) {
+      .gallery-grid {
+        grid-template-columns: 1fr; /* 1 列に落とす */
+      }
+    }
   </style>
 </head>
 <body>
@@ -29,16 +49,19 @@
 
     <section>
       <h2>テニス</h2>
-      <p>得意ショットはフラットサーブ。大会戦績などを掲載予定。</p>
-      <img src="https://images.unsplash.com/photo-1503341455253-b2e723bb3dbb?auto=format&fit=crop&w=800&q=60" alt="テニスイメージ">
+      <p>友人と定期的にプレー。得意ショットはフラットサーブ。</p>
+      <img src="images/tennis1.jpg" alt="テニスイメージ">
     </section>
 
     <section>
       <h2>書道</h2>
-      <p>高校から継続している書道歴 10　年。毛筆3段段。作品ギャラリーを今後追加予定。</p>
-      <img src="images/ca_1.jpg" alt="作品1">
-      <img src="images/ca_2.jpg" alt="作品2">
-      <img src="images/ca_3.jpg" alt="作品3">
+      <p>幼少期から継続している書道歴 10　年。毛筆3段段。</p>
+      <div class="gallery-grid">
+        <img src="images/ca1.jpg" alt="作品1">
+        <img src="images/ca2.jpg" alt="作品2">
+        <img src="images/ca3.jpg" alt="作品3">
+        <img src="images/ca4.jpg" alt="作品4">
+      </div>
     </section>
   </main>
 
