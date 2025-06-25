@@ -1,121 +1,244 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <title>松本崚佑のホームページ</title>
+  <meta name="description" content="応用情報工学科の学生、松本崚佑のポートフォリオサイト。研究成果や趣味などを紹介します。">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <!-- ちょっとした内蔵スタイル -->
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --primary: #2c3e50; /* ヘッダーの背景色 */
-      --accent:  #18bc9c; /* 見出しやポイント色 */
-      --bg:      #ecf0f1; /* ページ背景色   */
-      --text:    #2c3e50; /* 基本文字色     */
+      --primary: #2c3e50;   /* ナビゲーション背景 */
+      --accent:  #18bc9c;   /* アクセント色        */
+      --bg:      #ecf0f1;   /* ページ背景          */
+      --white:   #ffffff;
+      --dark:    #1a1a1a;
     }
 
-    /* 全体設定 */
+    *, *::before, *::after { box-sizing: border-box; }
     body {
       margin: 0;
-      font-family: "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      font-family: 'Noto Sans JP', sans-serif;
       background: var(--bg);
-      color: var(--text);
-      line-height: 1.6;
+      color: var(--dark);
     }
 
-    /* ヘッダー */
-    header {
+    /* ------------- ナビゲーション ------------- */
+    .navbar {
+      position: sticky;
+      top: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: .75rem 1.5rem;
       background: var(--primary);
-      color: #fff;
-      padding: 1.5rem 1rem;
-      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, .06);
+      z-index: 100;
     }
-    header h1 {
-      margin: 0;
-      font-size: 2.4rem;
-      letter-spacing: 0.05em;
+    .logo {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 1.5rem;
+      color: var(--white);
+      text-decoration: none;
     }
-
-    /* メイン領域 */
-    main {
-      max-width: 800px;
-      margin: 2rem auto;
-      padding: 0 1rem;
-    }
-    section {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-      padding: 1.5rem 2rem;
-      margin-bottom: 2rem;
-    }
-    section h2,
-    section h3 {
-      color: var(--accent);
-      margin-top: 0;
-    }
-
-    /* 箇条書きのドットをカスタム */
-    ul {
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
       list-style: none;
+      margin: 0;
       padding: 0;
     }
-    li::before {
-      content: "•";
-      color: var(--accent);
-      margin-right: 0.5em;
+    .nav-links a {
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 500;
+      transition: opacity .2s;
+    }
+    .nav-links a:hover { opacity: .75; }
+
+    /* ハンバーガー */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      gap: .3rem;
+      cursor: pointer;
+    }
+    .hamburger span {
+      width: 26px;
+      height: 3px;
+      background: var(--white);
+      transition: transform .3s;
     }
 
-    /* フッター */
-    footer {
+    /* ------------- ヒーロー ------------- */
+    .hero {
+      height: 60vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
       text-align: center;
-      font-size: 0.85rem;
-      color: #666;
-      padding: 1rem 0 2rem;
+      color: var(--white);
+      background: url('https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1400&q=80') center/cover fixed;
+      border-bottom: 4px solid var(--accent);
+      position: relative;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(44, 62, 80, .6);
+    }
+    .hero * { position: relative; z-index: 1; }
+    .hero h1 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 3rem;
+      margin: 0 0 .5rem;
+    }
+    .hero p {
+      font-size: 1.25rem;
+      margin: 0 0 1.5rem;
+    }
+    .btn {
+      display: inline-block;
+      padding: .75rem 1.5rem;
+      border-radius: 4px;
+      background: var(--accent);
+      color: var(--white);
+      text-decoration: none;
+      font-weight: 700;
+      transition: opacity .2s;
+    }
+    .btn:hover { opacity: .9; }
+
+    /* ------------- セクション共通 ------------- */
+    section {
+      max-width: 1100px;
+      margin: 4rem auto;
+      padding: 0 1.5rem;
+    }
+    h2 {
+      font-family: 'Montserrat', sans-serif;
+      font-size: 2rem;
+      color: var(--primary);
+      margin: 0 0 1rem;
     }
 
-    /* スマホ表示用 */
-    @media (max-width: 600px) {
-      header h1 { font-size: 1.9rem; }
-      section { padding: 1.2rem 1.4rem; }
+    /* カードグリッド */
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
+    .card {
+      background: var(--white);
+      padding: 1.5rem;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, .05);
+      transition: transform .2s;
+    }
+    .card:hover { transform: translateY(-4px); }
+    .card h3 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+    ul { padding-left: 1.2rem; }
+
+    /* ------------- フッター ------------- */
+    footer {
+      background: var(--primary);
+      color: var(--white);
+      text-align: center;
+      padding: 1rem 0;
+      font-size: .85rem;
+    }
+
+    /* ------------- モバイル ------------- */
+    @media (max-width: 768px) {
+      .nav-links {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        background: var(--primary);
+        flex-direction: column;
+        width: 200px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height .3s;
+      }
+      .nav-links.open { max-height: 300px; }
+      .hamburger { display: flex; }
     }
   </style>
 </head>
-
 <body>
-  <!-- ヘッダー -->
+  <!-- ナビゲーション -->
   <header>
-    <h1>松本崚佑のホームページ</h1>
+    <nav class="navbar">
+      <a href="#" class="logo">松本崚佑</a>
+      <ul class="nav-links" id="navLinks">
+        <li><a href="#about">About</a></li>
+        <li><a href="research.html">研究成果</a></li>
+        <li><a href="hobbies.html">趣味</a></li>
+      </ul>
+      <div class="hamburger" id="hamburger">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+    </nav>
   </header>
 
-  <!-- メインコンテンツ -->
-  <main>
-    <!-- ウェルカム -->
-    <section>
-      <h2>ようこそ</h2>
-      <p>このページでは、私のプロフィールや興味のあることをご紹介します。</p>
-    </section>
+  <!-- ヒーロー -->
+  <section class="hero">
+    <h1>ようこそ</h1>
+    <p>応用情報工学科<br>筋トレ・テニス・書道好きのエンジニア</p>
+    <a href="#about" class="btn">もっと見る</a>
+  </section>
 
-    <!-- 学部学科 -->
-    <section>
-      <h3>学部・学科</h3>
-      <p>応用情報工学科</p>
-    </section>
-
-    <!-- 趣味 -->
-    <section>
-      <h3>趣味</h3>
-      <ul>
-        <li>筋トレ</li>
-        <li>テニス</li>
-        <li>書道</li>
-      </ul>
-    </section>
-  </main>
+  <!-- About -->
+  <section id="about">
+    <h2>自己紹介</h2>
+    <div class="card-grid">
+      <article class="card">
+        <h3>プロフィール</h3>
+        <p><strong>名前:</strong> 松本 崚佑</p>
+        <p><strong>学部・学科:</strong> 応用情報工学科</p>
+      </article>
+      <article class="card">
+        <h3>研究テーマ</h3>
+        <p>主に<span style="white-space:nowrap;">〇〇アルゴリズム</span>によるデータ解析と<span style="white-space:nowrap;">△△モデル</span>の高速化を行っています。詳細は <a href="research.html">研究成果ページ</a> へ。</p>
+      </article>
+      <article class="card">
+        <h3>趣味</h3>
+        <ul>
+          <li>筋トレ</li>
+          <li>テニス</li>
+          <li>書道</li>
+        </ul>
+        <p><a href="hobbies.html">趣味ページ</a> で日々の活動を紹介しています。</p>
+      </article>
+    </div>
+  </section>
 
   <!-- フッター -->
   <footer>
     © 2025 松本崚佑
   </footer>
+
+  <script>
+    const hamburger = document.getElementById('hamburger');
+    const navLinks  = document.getElementById('navLinks');
+    hamburger.addEventListener('click', () => {
+      navLinks.classList.toggle('open');
+      hamburger.classList.toggle('active');
+    });
+  </script>
 </body>
 </html>
