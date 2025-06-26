@@ -42,7 +42,7 @@
       <p>欠損した心電図（ECG）波形を入力し、<strong>欠損していない前後の部分</strong>を条件として生成 AI が<br>欠損部分を推定・補完する手法を開発しています。</p>
       <!-- ECG Animation Canvas -->
       <canvas id="ecgCanvas" width="800" height="220"></canvas>
-      <p class="caption">欠損波形（グレー）を生成 AI が補完（グリーン）するイメージ</p>
+      <p class="caption">図 1：欠損波形（グレー）を生成 AI が補完（グリーン）するアニメーション（ループ再生）</p>
     </section>
 
     <!-- Step 2 -------------------------------------------------------------- -->
@@ -50,7 +50,7 @@
       <span class="step-label">STEP&nbsp;2</span>
       <h2>ブラックボックス問題と信頼性</h2>
       <p>しかし、生成 AI が<strong>どのような特徴を手がかりに波形を生成したのか</strong>が分からないため、<br>医学・薬学への応用では <em>Explainability（説明可能性）</em> が課題となります。</p>
-      <svg id="blackboxSvg" viewBox="0 0 640 200" width="800" height="200">
+      <svg id="blackboxSvg" viewBox="0 0 760 200" width="800" height="200">
         <style>
           .arrow{fill:none;stroke:var(--primary);stroke-width:3;marker-end:url(#arrowhead);} 
           .input{fill:#cfcfcf;} .box{fill:var(--primary);} .output{fill:var(--accent);} 
@@ -64,18 +64,18 @@
         <!-- 左: 入力ECG -->
         <rect x="20" y="60" width="140" height="80" class="input" rx="6"/>
         <text x="90" y="100">入力 ECG</text>
-        <!-- 渦巻き矢印（ベジェで軽いうずを描く） -->
-        <path d="M160 100 C 220 20 300 180 360 100" class="arrow" />
+        <!-- 直線矢印 -->
+        <path d="M160 100 H 300" class="arrow" />
         <!-- ブラックボックス -->
-        <rect x="360" y="40" width="120" height="120" class="box" rx="8"/>
-        <text x="420" y="100">生成&nbsp;AI<br>(ブラック<br>ボックス)</text>
-        <!-- 渦巻き矢印（出力側） -->
-        <path d="M480 100 C 540 180 600 20 640 100" class="arrow" />
+        <rect x="300" y="40" width="160" height="120" class="box" rx="8"/>
+        <text x="380" y="100">生成&nbsp;AI<br>(ブラック<br>ボックス)</text>
+        <!-- 直線矢印 生成AI → 欠損ECG -->
+        <path d="M460 100 H 600" class="arrow" />
         <!-- 右: 欠損部ECG -->
-        <rect x="640" y="60" width="140" height="80" class="output" rx="6"/>
-        <text x="710" y="100">欠損部 ECG</text>
+        <rect x="600" y="60" width="140" height="80" class="output" rx="6"/>
+        <text x="670" y="100">欠損部 ECG</text>
       </svg>
-     
+      <p class="caption">図 2：入力 ECG → 生成 AI (ブラックボックス) → 欠損部 ECG の直線フロー</p>
     </section>
 
     <!-- Step 3 -------------------------------------------------------------- -->
@@ -84,96 +84,90 @@
       <h2>重要領域の可視化による Explainability 向上</h2>
       <p>生成 AI が<strong>入力波形のどこを重視して欠損部を生成したか</strong>を可視化し、<br>医療者が直感的に信頼度を判断できるようにする研究を行いました。</p>
       <canvas id="attentionCanvas" width="800" height="220"></canvas>
-      <p class="caption">生成された欠損部（太線）がどこを注目して生成されたのか可視化するイメージ
-      </p>
+      <p class="caption">図 3：緑が濃い部分ほど生成に寄与したと推定される区間 (欠損生成部は除外)</p>
     </section>
 
   </main>
   <footer>© 2025 松本崚佑</footer>
 
   <script>
-    const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent');
+    const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+
+    /* ---- ECG helper: realistic synthetic beat (returns y offset) ---- */
+    function ecgShape(phase){
+      // phase: 0-100 (% of beat)
+      if(phase<5)               return  2*phase;                   // small up: P start
+      else if(phase<10)         return 10-2*phase;                 // back to baseline
+      else if(phase<13)         return -20*(phase-10)/3;           // Q dip
+      else if(phase<15)         return 35*(phase-13)/2 -20;        // R spike up
+      else if(phase<17)         return -25*(phase-15)/2 +15;       // S drop
+      else if(phase<25)         return 0;                          // baseline
+      else if(phase<35)         return  15*Math.sin((phase-25)/10*Math.PI); // T wave up
+      else if(phase<45)         return  15*Math.sin((phase-35)/10*Math.PI); // T wave down
+      else                      return 0;                          // baseline
+    }
 
     /* ---------------- ECG Animation (Step 1) - loop ---------------- */
     (function(){
-      const canvas=document.getElementById('ecgCanvas');
-      if(!canvas)return;
-      const ctx=canvas.getContext('2d');
-      const W=canvas.width, H=canvas.height, baseline=H/2;
-      const points=[]; const cycle=160; // pixels per heartbeat
-      for(let x=0;x<=W;x++){
-        const phase=x%cycle; let y=baseline;
-        if(phase<15) y-=30*(1-phase/15);
-        else if(phase<25) y-=30+50*(phase-15)/10;
-        else if(phase<45) y+=60*((phase-25)/20);
-        else if(phase<55) y-=40*((phase-45)/10);
-        else if(phase<95) y-=10*Math.sin((phase-55)/40*Math.PI);
+      const canvas=document.getElementById('ecgCanvas'); if(!canvas)return;
+      const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height,baseline=H/2;
+      const cyclePx=200; // pixels per beat
+      const totalPoints=W;
+      const points=[];
+      for(let x=0;x<totalPoints;x++){
+        const phase=((x%cyclePx)/cyclePx)*100; // percentage
+        const y=baseline - ecgShape(phase);
         points.push({x,y});
       }
       const start=300,end=450,duration=1500; // ms
       function drawBase(){
         ctx.clearRect(0,0,W,H);
-        ctx.lineWidth=2; ctx.lineJoin='round';
-        ctx.strokeStyle='#c0c0c0';
-        ctx.beginPath(); ctx.moveTo(0,points[0].y);
+        ctx.lineWidth=2; ctx.lineJoin='round'; ctx.strokeStyle='#c0c0c0';
+        ctx.beginPath(); ctx.moveTo(points[0].x,points[0].y);
         for(let i=1;i<points.length;i++){
-          if(i===start){ctx.stroke();ctx.beginPath();ctx.moveTo(end,points[end].y);continue;}
-          if(i>start&&i<end)continue;
+          if(i===start){ctx.stroke(); ctx.beginPath(); ctx.moveTo(points[end].x,points[end].y); continue;}
+          if(i>start && i<end) continue;
           ctx.lineTo(points[i].x,points[i].y);
         }
         ctx.stroke();
       }
       drawBase();
-      let prevLen=0; let lastTime=0;
-      function animate(timestamp){
-        if(!lastTime) lastTime=timestamp;
-        const elapsed=(timestamp-lastTime)%duration;
-        const progress=elapsed/duration;
-        const len=Math.floor(progress*(end-start));
-        // clear previous overlay
-        ctx.clearRect(start-2,0,(end-start)+4,H);
-        ctx.strokeStyle=ACCENT.trim(); ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(start,points[start].y);
-        for(let i=1;i<=len;i++) ctx.lineTo(start+i,points[start+i].y);
-        ctx.stroke();
-        requestAnimationFrame(animate);
+      function animate(){
+        const tStart=performance.now();
+        function frame(now){
+          const progress=((now-tStart)%duration)/duration; const len=Math.floor(progress*(end-start));
+          ctx.clearRect(start-1,0,(end-start)+2,H);
+          ctx.strokeStyle=ACCENT; ctx.lineWidth=2;
+          ctx.beginPath(); ctx.moveTo(points[start].x,points[start].y);
+          for(let i=1;i<=len;i++) ctx.lineTo(points[start+i].x,points[start+i].y);
+          ctx.stroke();
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
       }
-      requestAnimationFrame(animate);
+      animate();
     })();
 
     /* ---------------- Attention Heatmap & Generated Segment (Step 3) ------------ */
     (function(){
       const canvas=document.getElementById('attentionCanvas'); if(!canvas)return;
       const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height,baseline=H/2;
-      const points=[]; const cycle=160; for(let x=0;x<=W;x++){
-        const phase=x%cycle; let y=baseline;
-        if(phase<15) y-=30*(1-phase/15);
-        else if(phase<25) y-=30+50*(phase-15)/10;
-        else if(phase<45) y+=60*((phase-25)/20);
-        else if(phase<55) y-=40*((phase-45)/10);
-        else if(phase<95) y-=10*Math.sin((phase-55)/40*Math.PI);
-        points.push({x,y});
-      }
+      const cyclePx=200; const points=[]; for(let x=0;x<=W;x++){const phase=((x%cyclePx)/cyclePx)*100; const y=baseline - ecgShape(phase); points.push({x,y});}
       const start=300,end=450;
-      // draw full waveform (grey)
-      ctx.lineWidth=1.8; ctx.strokeStyle='#666'; ctx.beginPath(); ctx.moveTo(0,points[0].y);
+      // draw full waveform (grey thin)
+      ctx.lineWidth=1.6; ctx.strokeStyle='#666'; ctx.beginPath(); ctx.moveTo(points[0].x,points[0].y);
       for(const p of points) ctx.lineTo(p.x,p.y); ctx.stroke();
       // draw generated segment overlay (bold green)
-      ctx.lineWidth=2.5; ctx.strokeStyle=ACCENT.trim(); ctx.beginPath(); ctx.moveTo(start,points[start].y);
+      ctx.lineWidth=2.8; ctx.strokeStyle=ACCENT; ctx.beginPath(); ctx.moveTo(points[start].x,points[start].y);
       for(let i=start+1;i<=end;i++) ctx.lineTo(points[i].x,points[i].y); ctx.stroke();
-      // fake sparse attention weights (largely zeros)
-      const weights=points.map(()=>Math.random()<0.15?Math.random():0); // 15% non‑zero
+
+      // sparse attention weights outside generated segment
+      const weights=new Array(points.length).fill(0);
+      for(let i=0;i<points.length;i+=4){ if(i<start-20||i>end+20){ if(Math.random()<0.08){weights[i]=Math.random();} } }
       const max=Math.max(...weights);
-      const barWidth=4;
-      let idx=0; function drawBar(){
-        if(idx>=points.length){return;}
-        const alpha=(weights[idx]/(max||1))*0.6;
-        if(alpha>0){
-          ctx.fillStyle=`rgba(24,188,156,${alpha})`;
-          ctx.fillRect(points[idx].x-barWidth/2,0,barWidth,H);
-        }
-        idx+=4; requestAnimationFrame(drawBar);
-      }
+      const barW=4; let idx=0;
+      function drawBar(){
+        if(idx>=points.length){return;} if(weights[idx]>0){ const alpha=(weights[idx]/(max||1))*0.55; ctx.fillStyle=`rgba(24,188,156,${alpha})`; ctx.fillRect(points[idx].x-barW/2,0,barW,H);} idx+=4; requestAnimationFrame(drawBar); }
       drawBar();
     })();
   </script>
