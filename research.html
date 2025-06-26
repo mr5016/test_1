@@ -22,12 +22,12 @@
     a{color:var(--accent);text-decoration:none;}
     main{max-width:1000px;margin:2rem auto;padding:0 1.5rem;}
     h1{margin:0;font-size:2.2rem;font-family:'Montserrat',sans-serif;}
-    h2{margin-top:3rem;font-size:1.6rem;color:var(--primary);}    
+    h2{margin:2rem 0 1rem;font-size:1.6rem;color:var(--primary);}    
     section{background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);margin-bottom:2.5rem;position:relative;}
     canvas,svg{display:block;margin:1rem auto;max-width:100%;border:1px solid #ddd;border-radius:6px;background:#fff;}
     .caption{font-size:.9rem;color:#666;text-align:center;}
-    .step-label{position:absolute;top:-1.2rem;left:1rem;background:var(--accent);color:#fff;padding:.1rem .5rem;border-radius:4px;font-size:.8rem;font-weight:700;}
-    /* waveform inside rectangles (SVG) */
+    /* Flow animation helpers */
+    .flow-part{opacity:0;transition:opacity .4s ease;}
     .mini-wave{stroke:#fff;stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round;}
   </style>
 </head>
@@ -38,60 +38,59 @@
   </header>
   <main>
 
-    <!-- Step 1 -------------------------------------------------------------- -->
-    <section id="step1">
-      <span class="step-label">STEP&nbsp;1</span>
-      <h2>心電図欠損補完に生成 AI を応用</h2>
-      <p>欠損した心電図（ECG）波形を入力し、<strong>欠損していない前後の部分</strong>を条件として生成 AI が<br>欠損部分を推定・補完する手法を開発しています。</p>
-      <!-- ECG Animation Canvas -->
+    <!-- 欠損補完アニメーション -->
+    <section>
+      <h2>心電図欠損補完アニメーション</h2>
       <canvas id="ecgCanvas" width="800" height="240"></canvas>
       <p class="caption">図 1：欠損波形（グレー）を生成 AI が補完（グリーン）するアニメーション（ループ再生）</p>
     </section>
 
-    <!-- Step 2 -------------------------------------------------------------- -->
-    <section id="step2">
-      <span class="step-label">STEP&nbsp;2</span>
-      <h2>ブラックボックス問題と信頼性</h2>
-      <p>生成 AI の内部プロセスが不透明なため、医学応用には説明可能性が必要です。</p>
-
-      <!-- New simple SVG: Input → Model → Output -->
-      <svg viewBox="0 0 900 200" width="900" height="200">
+    <!-- ブラックボックス可視化フロー -->
+    <section>
+      <h2>ブラックボックス問題のフロー</h2>
+      <svg id="flowSvg" viewBox="0 0 920 220" width="920" height="220">
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="var(--primary)" />
           </marker>
           <style>
-            .rect-in{fill:#cfcfcf;} .rect-model{fill:var(--primary);} .rect-out{fill:var(--accent);} .arrow{stroke:var(--primary);stroke-width:3;fill:none;marker-end:url(#arrowhead);} text{fill:#fff;font-size:14px;font-family:'Noto Sans JP',sans-serif;dominant-baseline:middle;text-anchor:middle;}
+            .rect-in{fill:#cfcfcf;} .rect-model{fill:var(--primary);} .rect-out{fill:var(--accent);} 
+            .arrow{stroke:var(--primary);stroke-width:3;fill:none;marker-end:url(#arrowhead);} 
+            text{fill:#fff;font-size:14px;font-family:'Noto Sans JP',sans-serif;dominant-baseline:middle;text-anchor:middle;}
           </style>
         </defs>
         <!-- Input -->
-        <rect x="30" y="50" width="220" height="100" rx="8" class="rect-in" />
-        <text x="140" y="85">入力 ECG</text>
-        <!-- simple wave line inside -->
-        <polyline points="50,120 70,90 90,150 110,30 130,170 150,120 170,100 190,100 210,120" stroke="#fff" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round" />
-        <!-- Arrow -->
-        <line x1="250" y1="100" x2="400" y2="100" class="arrow" />
+        <g id="inputGroup" class="flow-part">
+          <rect x="20" y="60" width="220" height="100" rx="8" class="rect-in" />
+          <text x="130" y="95">入力 ECG</text>
+          <polyline points="40,130 60,100 80,160 100,40 120,180 140,130 160,110 180,110 200,130" class="mini-wave" />
+        </g>
+        <!-- Arrow 1 -->
+        <line id="arrow1" x1="240" y1="110" x2="400" y2="110" class="arrow flow-part" />
         <!-- Model -->
-        <rect x="400" y="40" width="150" height="120" rx="8" class="rect-model" />
-        <text x="475" y="100">生成モデル</text>
-        <text x="475" y="125">(ブラックボックス)</text>
-        <!-- Arrow -->
-        <line x1="550" y1="100" x2="700" y2="100" class="arrow" />
+        <g id="modelGroup" class="flow-part">
+          <rect x="400" y="50" width="160" height="120" rx="8" class="rect-model" />
+          <text x="480" y="95">生成モデル</text>
+          <text x="480" y="120">(ブラックボックス)</text>
+          <text id="qMark" x="480" y="35" font-size="28" fill="#fff" opacity="0">?</text>
+        </g>
+        <!-- Arrow 2 -->
+        <line id="arrow2" x1="560" y1="110" x2="720" y2="110" class="arrow flow-part" />
         <!-- Output -->
-        <rect x="700" y="50" width="220" height="100" rx="8" class="rect-out" />
-        <text x="810" y="85">欠損部 ECG</text>
-        <polyline points="720,120 740,90 760,150 780,30 800,170 820,120 840,100 860,100 880,120" stroke="#fff" stroke-width="2" fill="none" stroke-linejoin="round" stroke-linecap="round" />
+        <g id="outputGroup" class="flow-part">
+          <rect x="720" y="60" width="220" height="100" rx="8" class="rect-out" />
+          <text x="830" y="95">欠損部 ECG</text>
+          <polyline points="740,130 760,100 780,160 800,40 820,180 840,130 860,110 880,110 900,130" class="mini-wave" />
+        </g>
       </svg>
-      <p class="caption">図 2：入力波形 → 生成モデル → 補完波形 のフロー</p>
+      <p class="caption">図 2：入力 → 生成モデル → 出力 を順番に表示し、モデル処理時に ? マークでブラックボックス性を強調</p>
     </section>
 
-    <!-- Step 3 -------------------------------------------------------------- -->
-    <section id="step3">
-      <span class="step-label">STEP&nbsp;3</span>
-      <h2>重要領域の可視化による Explainability 向上</h2>
-      <p>生成 AI が<strong>入力波形のどこを重視して欠損部を生成したか</strong>を可視化し、<br>医療者が直感的に信頼度を判断できるようにする研究を行いました。</p>
+    <!-- 可視化ヒートマップ -->
+    <section>
+      <h2>重要領域ヒートマップ</h2>
       <canvas id="attentionCanvas" width="800" height="240"></canvas>
-      <p class="caption">図 3：黄色が濃い部分ほど生成に寄与したと推定される区間 (欠損生成部は除外)</p>
+      <p class="caption">図 3：黄色が濃い部分ほど生成に寄与したと推定される区間 (生成アニメ後に一括表示)</p>
     </section>
 
   </main>
@@ -99,86 +98,19 @@
 
   <script>
     const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-    const HEAT=getComputedStyle(document.documentElement).getPropertyValue('--heat').trim();
 
-    /* ---- ECG helper: realistic shape based on provided image ---- */
-    function ecgShape(phase){
-      if(phase<6)                    return 6*Math.sin((phase/6)*Math.PI);            // P up small
-      else if(phase<9)               return -10*(phase-6);                            // dip
-      else if(phase<12)              return 0;
-      else if(phase<14)              return -60*(phase-12)/2;                         // Q
-      else if(phase<15)              return 180*(phase-14) -60;                       // R peak up
-      else if(phase<16)              return -120*(phase-15) +120;                     // S
-      else if(phase<22)              return 0;
-      else if(phase<32)              return 60*Math.sin(((phase-22)/10)*Math.PI);      // T wave
-      else                           return 0;
-    }
+    /* ---- ECG helper ---- */
+    function ecgShape(p){ if(p<6) return 6*Math.sin((p/6)*Math.PI); else if(p<9) return -10*(p-6); else if(p<12) return 0; else if(p<14) return -60*(p-12)/2; else if(p<15) return 180*(p-14)-60; else if(p<16) return -120*(p-15)+120; else if(p<22) return 0; else if(p<32) return 60*Math.sin(((p-22)/10)*Math.PI); else return 0; }
 
-    /* ---------------- ECG Animation (Step 1) - loop ---------------- */
+    /* ----------- Figure 1 Animation ----------- */
     (function(){
-      const canvas=document.getElementById('ecgCanvas'); if(!canvas)return;
-      const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height,baseline=H/2;
-      const cyclePx=250; // pixels per beat
-      const points=[];
-      for(let x=0;x<=W;x++){
-        const phase=((x%cyclePx)/cyclePx)*100;
-        const y=baseline - ecgShape(phase);
-        points.push({x,y});
-      }
-      const start=230,end=380,duration=2000; // ensure segment with peak
-      function drawBase(){
-        ctx.clearRect(0,0,W,H);
-        ctx.lineWidth=2; ctx.lineJoin='round'; ctx.strokeStyle='#c0c0c0';
-        ctx.beginPath(); ctx.moveTo(points[0].x,points[0].y);
-        for(let i=1;i<points.length;i++){
-          if(i===start){ctx.stroke(); ctx.beginPath(); ctx.moveTo(points[end].x,points[end].y); continue;}
-          if(i>start && i<end) continue;
-          ctx.lineTo(points[i].x,points[i].y);
-        }
-        ctx.stroke();
-      }
-      drawBase();
-      function animate(){
-        const t0=performance.now();
-        function frame(now){
-          const p=((now-t0)%duration)/duration; const len=Math.floor(p*(end-start));
-          ctx.clearRect(start-2,0,(end-start)+4,H);
-          ctx.lineWidth=2; ctx.strokeStyle=ACCENT;
-          ctx.beginPath(); ctx.moveTo(points[start].x,points[start].y);
-          for(let i=1;i<=len;i++) ctx.lineTo(points[start+i].x,points[start+i].y);
-          ctx.stroke();
-          requestAnimationFrame(frame);
-        }
-        requestAnimationFrame(frame);
-      }
-      animate();
-    })();
+      const c=document.getElementById('ecgCanvas');if(!c)return;const ctx=c.getContext('2d');const W=c.width,H=c.height,B=H/2;const cyc=250;const pts=[];for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100;pts.push({x,y:B-ecgShape(p)});}const st=230,en=380,dur=2000;function base(){ctx.clearRect(0,0,W,H);ctx.lineWidth=2;ctx.strokeStyle='#c0c0c0';ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++){if(i===st){ctx.stroke();ctx.beginPath();ctx.moveTo(pts[en].x,pts[en].y);continue;}if(i>st&&i<en)continue;ctx.lineTo(pts[i].x,pts[i].y);}ctx.stroke();}base();function loop(){const t0=performance.now();function frame(now){const pr=((now-t0)%dur)/dur;const len=Math.floor(pr*(en-st));ctx.clearRect(st-2,0,(en-st)+4,H);ctx.lineWidth=2;ctx.strokeStyle=ACCENT;ctx.beginPath();ctx.moveTo(pts[st].x,pts[st].y);for(let i=1;i<=len;i++)ctx.lineTo(pts[st+i].x,pts[st+i].y);ctx.stroke();requestAnimationFrame(frame);}requestAnimationFrame(frame);}loop();})();
 
-    /* ---------------- Attention Heatmap & Generated Segment (Step 3) ------------ */
-    (function(){
-      const canvas=document.getElementById('attentionCanvas'); if(!canvas)return;
-      const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height,baseline=H/2;
-      const cyclePx=250; const points=[];
-      for(let x=0;x<=W;x++){ const phase=((x%cyclePx)/cyclePx)*100; const y=baseline - ecgShape(phase); points.push({x,y}); }
-      const start=230,end=380;
-      // full waveform
-      ctx.lineWidth=1.6; ctx.strokeStyle='#666'; ctx.beginPath(); ctx.moveTo(points[0].x,points[0].y);
-      for(const p of points) ctx.lineTo(p.x,p.y); ctx.stroke();
-      // generated segment bold
-      ctx.lineWidth=2.8; ctx.strokeStyle=ACCENT; ctx.beginPath(); ctx.moveTo(points[start].x,points[start].y);
-      for(let i=start+1;i<=end;i++) ctx.lineTo(points[i].x,points[i].y); ctx.stroke();
-      // sparse yellow heatmap outside generated segment with buffer
-      const weights=new Array(points.length).fill(0);
-      for(let i=0;i<points.length;i+=4){ if(i<start-20||i>end+20){ if(Math.random()<0.06){weights[i]=0.2+0.8*Math.random();} } }
-      const max=Math.max(...weights);
-      const barW=4; let idx=0;
-      function drawBar(){
-        if(idx>=points.length) return;
-        if(weights[idx]>0){ const alpha=(weights[idx]/max)*0.55; ctx.fillStyle=`rgba(245,196,0,${alpha})`; ctx.fillRect(points[idx].x-barW/2,0,barW,H); }
-        idx+=4; requestAnimationFrame(drawBar);
-      }
-      drawBar();
-    })();
+    /* ----------- Figure 3 Animation then Heatmap ----------- */
+    (function(){ const c=document.getElementById('attentionCanvas');if(!c)return;const ctx=c.getContext('2d');const W=c.width,H=c.height,B=H/2;const cyc=250;const pts=[];for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100;pts.push({x,y:B-ecgShape(p)});}const st=230,en=380,dur=1800;function drawWave(){ctx.lineWidth=1.6;ctx.strokeStyle='#666';ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(const p of pts)ctx.lineTo(p.x,p.y);ctx.stroke();}drawWave();function animateSegment(){const t0=performance.now();function frame(now){const pr=Math.min((now-t0)/dur,1);const len=Math.floor(pr*(en-st));ctx.clearRect(st-2,0,(en-st)+4,H);ctx.lineWidth=2.8;ctx.strokeStyle=ACCENT;ctx.beginPath();ctx.moveTo(pts[st].x,pts[st].y);for(let i=1;i<=len;i++)ctx.lineTo(pts[st+i].x,pts[st+i].y);ctx.stroke();if(pr<1){requestAnimationFrame(frame);}else{drawHeat(); setTimeout(animateSegment,3000);} } requestAnimationFrame(frame);} function drawHeat(){const wts=new Array(pts.length).fill(0);for(let i=0;i<pts.length;i+=4){if(i<st-20||i>en+20){if(Math.random()<0.06)wts[i]=0.2+0.8*Math.random();}}const max=Math.max(...wts);for(let i=0;i<pts.length;i+=4){if(wts[i]>0){const a=(wts[i]/max)*0.55;ctx.fillStyle=`rgba(245,196,0,${a})`;ctx.fillRect(pts[i].x-2,0,4,H);}}}animateSegment();})();
+
+    /* ----------- Figure 2 Flow Animation ----------- */
+    (function(){ const order=['inputGroup','arrow1','modelGroup','arrow2','outputGroup']; const delays=[0,600,1200,2200,2800]; order.forEach(id=>document.getElementById(id).style.opacity=0);const q=document.getElementById('qMark');q.style.opacity=0;function anim(){order.forEach((id,i)=>{setTimeout(()=>{const el=document.getElementById(id);el.style.opacity=1; if(id==='modelGroup'){q.style.opacity=1; setTimeout(()=>q.style.opacity=0,700);} },delays[i]);});}anim(); setInterval(()=>{order.forEach(id=>document.getElementById(id).style.opacity=0);q.style.opacity=0;setTimeout(anim,200);},4000);} )();
   </script>
 </body>
 </html>
