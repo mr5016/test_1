@@ -26,6 +26,8 @@
     canvas,svg{display:block;margin:1rem auto;max-width:100%;border:1px solid #ddd;border-radius:6px;background:#fff;}
     .caption{font-size:.9rem;color:#666;text-align:center;}
     .step-label{position:absolute;top:-1.2rem;left:1rem;background:var(--accent);color:#fff;padding:.1rem .5rem;border-radius:4px;font-size:.8rem;font-weight:700;}
+    /* waveform inside rectangles (SVG) */
+    .mini-wave{stroke:#fff;stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round;}
   </style>
 </head>
 <body>
@@ -41,7 +43,7 @@
       <h2>心電図欠損補完に生成 AI を応用</h2>
       <p>欠損した心電図（ECG）波形を入力し、<strong>欠損していない前後の部分</strong>を条件として生成 AI が<br>欠損部分を推定・補完する手法を開発しています。</p>
       <!-- ECG Animation Canvas -->
-      <canvas id="ecgCanvas" width="800" height="220"></canvas>
+      <canvas id="ecgCanvas" width="800" height="240"></canvas>
       <p class="caption">図 1：欠損波形（グレー）を生成 AI が補完（グリーン）するアニメーション（ループ再生）</p>
     </section>
 
@@ -50,32 +52,35 @@
       <span class="step-label">STEP&nbsp;2</span>
       <h2>ブラックボックス問題と信頼性</h2>
       <p>しかし、生成 AI が<strong>どのような特徴を手がかりに波形を生成したのか</strong>が分からないため、<br>医学・薬学への応用では <em>Explainability（説明可能性）</em> が課題となります。</p>
-      <svg id="blackboxSvg" viewBox="0 0 760 200" width="800" height="200">
-        <style>
-          .arrow{fill:none;stroke:var(--primary);stroke-width:3;marker-end:url(#arrowhead);} 
-          .input{fill:#cfcfcf;} .box{fill:var(--primary);} .output{fill:var(--accent);} 
-          text{fill:#fff;font-size:14px;font-family:'Noto Sans JP',sans-serif;dominant-baseline:middle;text-anchor:middle;}
-        </style>
+      <svg id="blackboxSvg" viewBox="0 0 820 220" width="820" height="220">
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
             <polygon points="0 0, 10 3.5, 0 7" fill="var(--primary)" />
           </marker>
         </defs>
+        <style>
+          .arrow{fill:none;stroke:var(--primary);stroke-width:3;marker-end:url(#arrowhead);} 
+          .input{fill:#cfcfcf;} .box{fill:var(--primary);} .output{fill:var(--accent);} 
+          text{fill:#fff;font-size:14px;font-family:'Noto Sans JP',sans-serif;dominant-baseline:middle;text-anchor:middle;}
+        </style>
         <!-- 左: 入力ECG -->
-        <rect x="20" y="60" width="140" height="80" class="input" rx="6"/>
-        <text x="90" y="100">入力 ECG</text>
+        <rect x="20" y="70" width="160" height="80" class="input" rx="6"/>
+        <!-- wave inside -->
+        <path d="M30 110 l20 -20 l20 40 l20 -120 l20 160 l20 -40 l20 -20 l20 0" class="mini-wave"/>
+        <text x="100" y="155">入力 ECG</text>
         <!-- 直線矢印 -->
-        <path d="M160 100 H 300" class="arrow" />
+        <path d="M180 110 H 340" class="arrow" />
         <!-- ブラックボックス -->
-        <rect x="300" y="40" width="160" height="120" class="box" rx="8"/>
-        <text x="380" y="100">生成&nbsp;AI<br>(ブラック<br>ボックス)</text>
+        <rect x="340" y="50" width="180" height="120" class="box" rx="8"/>
+        <text x="430" y="110">生成&nbsp;AI<br>(ブラック<br>ボックス)</text>
         <!-- 直線矢印 生成AI → 欠損ECG -->
-        <path d="M460 100 H 600" class="arrow" />
+        <path d="M520 110 H 680" class="arrow" />
         <!-- 右: 欠損部ECG -->
-        <rect x="600" y="60" width="140" height="80" class="output" rx="6"/>
-        <text x="670" y="100">欠損部 ECG</text>
+        <rect x="680" y="70" width="160" height="80" class="output" rx="6"/>
+        <path d="M690 110 l20 -20 l20 40 l20 -120 l20 160 l20 -40 l20 -20 l20 0" class="mini-wave"/>
+        <text x="760" y="155">欠損部 ECG</text>
       </svg>
-      <p class="caption">図 2：入力 ECG → 生成 AI (ブラックボックス) → 欠損部 ECG の直線フロー</p>
+      <p class="caption">図 2：入力波形 → 生成モデル → 出力波形 の直線フロー</p>
     </section>
 
     <!-- Step 3 -------------------------------------------------------------- -->
@@ -83,7 +88,7 @@
       <span class="step-label">STEP&nbsp;3</span>
       <h2>重要領域の可視化による Explainability 向上</h2>
       <p>生成 AI が<strong>入力波形のどこを重視して欠損部を生成したか</strong>を可視化し、<br>医療者が直感的に信頼度を判断できるようにする研究を行いました。</p>
-      <canvas id="attentionCanvas" width="800" height="220"></canvas>
+      <canvas id="attentionCanvas" width="800" height="240"></canvas>
       <p class="caption">図 3：緑が濃い部分ほど生成に寄与したと推定される区間 (欠損生成部は除外)</p>
     </section>
 
@@ -93,33 +98,32 @@
   <script>
     const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
 
-    /* ---- ECG helper: realistic synthetic beat (returns y offset) ---- */
+    /* ---- ECG helper: realistic shape based on provided image ---- */
+    // Returns y-offset (positive = upward, px) for phase 0-100
     function ecgShape(phase){
-      // phase: 0-100 (% of beat)
-      if(phase<5)               return  2*phase;                   // small up: P start
-      else if(phase<10)         return 10-2*phase;                 // back to baseline
-      else if(phase<13)         return -20*(phase-10)/3;           // Q dip
-      else if(phase<15)         return 35*(phase-13)/2 -20;        // R spike up
-      else if(phase<17)         return -25*(phase-15)/2 +15;       // S drop
-      else if(phase<25)         return 0;                          // baseline
-      else if(phase<35)         return  15*Math.sin((phase-25)/10*Math.PI); // T wave up
-      else if(phase<45)         return  15*Math.sin((phase-35)/10*Math.PI); // T wave down
-      else                      return 0;                          // baseline
+      if(phase<6)                    return 2*Math.sin((phase/6)*Math.PI);            // small P up
+      else if(phase<9)               return -4*(phase-6);                             // small dip
+      else if(phase<12)              return 0;                                        // baseline before Q
+      else if(phase<14)              return -40*(phase-12)/2;                         // sharp Q down
+      else if(phase<15)              return 120*(phase-14)/1 -40;                     // R peak up
+      else if(phase<16)              return -80*(phase-15)/1 +80;                     // S down
+      else if(phase<22)              return 0;                                        // ST segment
+      else if(phase<32)              return 30*Math.sin(((phase-22)/10)*Math.PI);      // T wave hump
+      else                           return 0;                                        // rest
     }
 
     /* ---------------- ECG Animation (Step 1) - loop ---------------- */
     (function(){
       const canvas=document.getElementById('ecgCanvas'); if(!canvas)return;
       const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height,baseline=H/2;
-      const cyclePx=200; // pixels per beat
-      const totalPoints=W;
+      const cyclePx=220; // pixels per beat
       const points=[];
-      for(let x=0;x<totalPoints;x++){
-        const phase=((x%cyclePx)/cyclePx)*100; // percentage
+      for(let x=0;x<=W;x++){
+        const phase=((x%cyclePx)/cyclePx)*100;
         const y=baseline - ecgShape(phase);
         points.push({x,y});
       }
-      const start=300,end=450,duration=1500; // ms
+      const start=300,end=450,duration=1800; // ms
       function drawBase(){
         ctx.clearRect(0,0,W,H);
         ctx.lineWidth=2; ctx.lineJoin='round'; ctx.strokeStyle='#c0c0c0';
@@ -133,11 +137,11 @@
       }
       drawBase();
       function animate(){
-        const tStart=performance.now();
+        const t0=performance.now();
         function frame(now){
-          const progress=((now-tStart)%duration)/duration; const len=Math.floor(progress*(end-start));
-          ctx.clearRect(start-1,0,(end-start)+2,H);
-          ctx.strokeStyle=ACCENT; ctx.lineWidth=2;
+          const p=((now-t0)%duration)/duration; const len=Math.floor(p*(end-start));
+          ctx.clearRect(start-2,0,(end-start)+4,H);
+          ctx.lineWidth=2; ctx.strokeStyle=ACCENT;
           ctx.beginPath(); ctx.moveTo(points[start].x,points[start].y);
           for(let i=1;i<=len;i++) ctx.lineTo(points[start+i].x,points[start+i].y);
           ctx.stroke();
@@ -152,22 +156,26 @@
     (function(){
       const canvas=document.getElementById('attentionCanvas'); if(!canvas)return;
       const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height,baseline=H/2;
-      const cyclePx=200; const points=[]; for(let x=0;x<=W;x++){const phase=((x%cyclePx)/cyclePx)*100; const y=baseline - ecgShape(phase); points.push({x,y});}
+      const cyclePx=220;
+      const points=[];
+      for(let x=0;x<=W;x++){ const phase=((x%cyclePx)/cyclePx)*100; const y=baseline - ecgShape(phase); points.push({x,y}); }
       const start=300,end=450;
-      // draw full waveform (grey thin)
+      // draw full waveform (grey)
       ctx.lineWidth=1.6; ctx.strokeStyle='#666'; ctx.beginPath(); ctx.moveTo(points[0].x,points[0].y);
       for(const p of points) ctx.lineTo(p.x,p.y); ctx.stroke();
-      // draw generated segment overlay (bold green)
+      // generated segment bold
       ctx.lineWidth=2.8; ctx.strokeStyle=ACCENT; ctx.beginPath(); ctx.moveTo(points[start].x,points[start].y);
       for(let i=start+1;i<=end;i++) ctx.lineTo(points[i].x,points[i].y); ctx.stroke();
-
-      // sparse attention weights outside generated segment
+      // sparse attention weights outside generated segment (and a 20px buffer)
       const weights=new Array(points.length).fill(0);
-      for(let i=0;i<points.length;i+=4){ if(i<start-20||i>end+20){ if(Math.random()<0.08){weights[i]=Math.random();} } }
+      for(let i=0;i<points.length;i+=4){ if(i<start-20||i>end+20){ if(Math.random()<0.06){weights[i]=0.2+0.8*Math.random();} } }
       const max=Math.max(...weights);
       const barW=4; let idx=0;
       function drawBar(){
-        if(idx>=points.length){return;} if(weights[idx]>0){ const alpha=(weights[idx]/(max||1))*0.55; ctx.fillStyle=`rgba(24,188,156,${alpha})`; ctx.fillRect(points[idx].x-barW/2,0,barW,H);} idx+=4; requestAnimationFrame(drawBar); }
+        if(idx>=points.length) return;
+        if(weights[idx]>0){ const alpha=(weights[idx]/max)*0.55; ctx.fillStyle=`rgba(24,188,156,${alpha})`; ctx.fillRect(points[idx].x-barW/2,0,barW,H); }
+        idx+=4; requestAnimationFrame(drawBar);
+      }
       drawBar();
     })();
   </script>
