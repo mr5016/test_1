@@ -1,43 +1,194 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>研究成果 | 松本崚佑</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="index.html"> <!-- 共通スタイルを流用したい場合は index から分離して読み込む -->
+  <meta charset="utf-8" />
+  <title>研究紹介 | 松本崚佑</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: "Noto Sans JP", sans-serif; margin: 0; background: #ecf0f1; color:#2c3e50;}
-    header, footer { background:#2c3e50; color:#fff; text-align:center; padding:1rem 0;}
-    main { max-width:960px; margin:2rem auto; padding:0 1rem;}
-    h1 { margin-top:0; font-size:2rem;}
-    article { background:#fff; padding:1.5rem 2rem; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,.05); margin-bottom:2rem;}
-    time { font-size:.9rem; color:#888;}
+    :root{
+      --primary:#2c3e50;
+      --accent:#18bc9c;
+      --bg:#ecf0f1;
+      --white:#ffffff;
+      --dark:#1a1a1a;
+    }
+    *,*::before,*::after{box-sizing:border-box;}
+    body{margin:0;font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--dark);}
+    header,footer{background:var(--primary);color:#fff;text-align:center;padding:1rem 0;}
+    a{color:var(--accent);text-decoration:none;}
+    main{max-width:1000px;margin:2rem auto;padding:0 1.5rem;}
+    h1{margin:0;font-size:2.2rem;font-family:'Montserrat',sans-serif;}
+    h2{margin-top:3rem;font-size:1.6rem;color:var(--primary);}    
+    section{background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);margin-bottom:2.5rem;position:relative;}
+    canvas,svg{display:block;margin:1rem auto;max-width:100%;border:1px solid #ddd;border-radius:6px;background:#fff;}
+    .caption{font-size:.9rem;color:#666;text-align:center;}
+    .step-label{position:absolute;top:-1.2rem;left:1rem;background:var(--accent);color:#fff;padding:.1rem .5rem;border-radius:4px;font-size:.8rem;font-weight:700;}
   </style>
 </head>
 <body>
   <header>
-    <h1>研究成果</h1>
-    <nav><a href="index.html" style="color:#18bc9c;text-decoration:none;">← トップへ戻る</a></nav>
+    <h1>研究紹介</h1>
+    <nav><a href="index.html">← トップへ戻る</a></nav>
   </header>
-
   <main>
-    <!-- 論文や発表をカード形式で羅列 -->
-    <article>
-      <h2>査読付き論文タイトル（例）</h2>
-      <time datetime="2025-03">2025年3月</time>
-      <p>〇〇国際会議に採択。△△アルゴリズムを用いたデータマイニング手法の高速化を示し、従来比 40% の性能向上を達成。</p>
-      <p><a href="#" target="_blank">PDFはこちら</a></p>
-    </article>
 
-    <article>
-      <h2>国内学会発表（例）</h2>
-      <time datetime="2024-10">2024年10月</time>
-      <p>日本情報学会にてポスター発表。ニューラルネットワークの省メモリ化について議論。</p>
-    </article>
+    <!-- Step 1 -------------------------------------------------------------- -->
+    <section id="step1">
+      <span class="step-label">STEP&nbsp;1</span>
+      <h2>心電図欠損補完に生成 AI を応用</h2>
+      <p>欠損した心電図（ECG）波形を入力し、<strong>欠損していない前後の部分</strong>を条件として生成 AI が<br>欠損部分を推定・補完する手法を開発しています。</p>
+      <!-- ECG Animation Canvas -->
+      <canvas id="ecgCanvas" width="800" height="220"></canvas>
+      <p class="caption">図 1：欠損波形（グレー）を生成 AI が補完（グリーン）するアニメーション</p>
+    </section>
 
-    <!-- 必要に応じて追加 -->
+    <!-- Step 2 -------------------------------------------------------------- -->
+    <section id="step2">
+      <span class="step-label">STEP&nbsp;2</span>
+      <h2>ブラックボックス問題と信頼性</h2>
+      <p>しかし、生成 AI が<strong>どのような特徴を手がかりに波形を生成したのか</strong>が分からないため、<br>医学・薬学への応用では <em>Explainability（説明可能性）</em> が課題となります。</p>
+      <svg id="blackboxSvg" viewBox="0 0 600 160" width="800" height="160">
+        <style>
+          .arrow{fill:none;stroke:var(--primary);stroke-width:3;marker-end:url(#arrowhead);} 
+          .input{fill:#cfcfcf;}
+          .box{fill:var(--primary);} 
+          .output{fill:var(--accent);} 
+          text{fill:#fff;font-size:14px;font-family:'Noto Sans JP',sans-serif;dominant-baseline:middle;text-anchor:middle;}
+        </style>
+        <defs>
+          <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="var(--primary)" />
+          </marker>
+        </defs>
+        <rect x="20" y="40" width="120" height="80" class="input" rx="6"/>
+        <text x="80" y="80">欠損 ECG</text>
+        <path d="M140 80 H260" class="arrow" />
+        <rect x="260" y="30" width="120" height="100" class="box" rx="8"/>
+        <text x="320" y="80">生成&nbsp;AI<br>(ブラック<br>ボックス)</text>
+        <path d="M380 80 H500" class="arrow" />
+        <rect x="500" y="40" width="120" height="80" class="output" rx="6"/>
+        <text x="560" y="80">補完 ECG</text>
+      </svg>
+      <p class="caption">図 2：現状は「入力 → ブラックボックス → 出力」で内部プロセスが不透明</p>
+    </section>
+
+    <!-- Step 3 -------------------------------------------------------------- -->
+    <section id="step3">
+      <span class="step-label">STEP&nbsp;3</span>
+      <h2>重要領域の可視化による Explainability 向上</h2>
+      <p>生成 AI が<strong>入力波形のどこを重視して欠損部を生成したか</strong>を可視化し、<br>医療者が直感的に信頼度を判断できるようにする研究を行いました。</p>
+      <canvas id="attentionCanvas" width="800" height="220"></canvas>
+      <p class="caption">図 3：色の濃い部分ほど生成に強く寄与したと推定される入力区間</p>
+    </section>
+
   </main>
-
   <footer>© 2025 松本崚佑</footer>
+
+  <script>
+    /* ---------------- ECG Animation (Step 1) ---------------- */
+    (function(){
+      const canvas=document.getElementById('ecgCanvas');
+      if(!canvas)return;
+      const ctx=canvas.getContext('2d');
+      const W=canvas.width, H=canvas.height;
+      const baseline=H/2;
+      const points=[];
+      // Generate dummy ECG-like waveform
+      const cycle=160; // pixels per heartbeat
+      for(let x=0;x<=W;x++){
+        const phase=x%cycle;
+        let y=baseline;
+        if(phase<15) y-=30* (1-phase/15);         // small up stroke
+        else if(phase<25) y-=30 + 50*(phase-15)/10; // sharp down to valley
+        else if(phase<45) y+=60*( (phase-25)/20 ); // quick rise to peak
+        else if(phase<55) y-=40*( (phase-45)/10 ); // quick drop
+        else if(phase<95) y-=10*Math.sin((phase-55)/40*Math.PI); // small oscillation
+        points.push({x,y});
+      }
+      const missingStart=300, missingEnd=450;
+      // Draw base waveform with missing segment grey
+      ctx.lineWidth=2;
+      ctx.lineJoin='round';
+      ctx.strokeStyle='#c0c0c0';
+      ctx.beginPath();
+      ctx.moveTo(0,points[0].y);
+      for(let i=1;i<points.length;i++){
+        const p=points[i];
+        if(p.x===missingStart){ ctx.stroke(); ctx.beginPath(); ctx.moveTo(missingEnd, points[i+ (missingEnd-missingStart)].y); continue; }
+        if(p.x>missingStart && p.x<missingEnd) continue; // skip
+        ctx.lineTo(p.x, p.y);
+      }
+      ctx.stroke();
+
+      // Animate filling missing segment
+      let t=0, duration=1500; // ms
+      const totalPoints=missingEnd-missingStart;
+      function animate(timestamp){
+        if(!t) t=timestamp;
+        const progress=Math.min((timestamp-t)/duration,1);
+        const len=Math.floor(progress*totalPoints);
+        ctx.strokeStyle= getComputedStyle(document.documentElement).getPropertyValue('--accent');
+        ctx.beginPath();
+        ctx.moveTo(missingStart, points[missingStart].y);
+        for(let i=1;i<=len;i++){
+          const idx=missingStart+i;
+          ctx.lineTo(idx, points[idx].y);
+        }
+        ctx.stroke();
+        if(progress<1) requestAnimationFrame(animate);
+      }
+      setTimeout(()=>requestAnimationFrame(animate),500);
+    })();
+
+    /* ---------------- Attention Heatmap (Step 3) ------------ */
+    (function(){
+      const canvas=document.getElementById('attentionCanvas');
+      if(!canvas)return;
+      const ctx=canvas.getContext('2d');
+      const W=canvas.width, H=canvas.height;
+      const baseline=H/2;
+      const points=[];
+      const cycle=160;
+      for(let x=0;x<=W;x++){
+        const phase=x%cycle;
+        let y=baseline;
+        if(phase<15) y-=30* (1-phase/15);
+        else if(phase<25) y-=30 + 50*(phase-15)/10;
+        else if(phase<45) y+=60*( (phase-25)/20 );
+        else if(phase<55) y-=40*( (phase-45)/10 );
+        else if(phase<95) y-=10*Math.sin((phase-55)/40*Math.PI);
+        points.push({x,y});
+      }
+      // Draw waveform
+      ctx.lineWidth=1.8;
+      ctx.strokeStyle='#666';
+      ctx.beginPath();
+      ctx.moveTo(0,points[0].y);
+      for(const p of points){ ctx.lineTo(p.x,p.y); }
+      ctx.stroke();
+
+      // Fake attention weights (random)
+      const weights=new Array(points.length).fill(0).map(()=>Math.random());
+      // Normalize
+      const max=Math.max(...weights);
+      for(let i=0;i<weights.length;i++) weights[i]/=max;
+
+      // Draw heatmap rectangles
+      const barWidth=4;
+      let idx=0;
+      function drawBar(){
+        if(idx>=points.length){return;}
+        const alpha=weights[idx]*0.6; // opacity
+        ctx.fillStyle=`rgba(24,188,156,${alpha})`;
+        ctx.fillRect(points[idx].x-barWidth/2,0,barWidth,H);
+        idx+=4;
+        requestAnimationFrame(drawBar);
+      }
+      drawBar();
+    })();
+  </script>
 </body>
 </html>
