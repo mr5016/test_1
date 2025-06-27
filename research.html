@@ -39,15 +39,14 @@
   <main>
     <!-- ───────── 図1 ───────── -->
     <section>
-      <h2>心電図欠損補完アニメーション</h2>
+      <h2>生成AIを用いて心電図の補完を行う研究がされていた</h2>
       <canvas id="ecgCanvas" width="800" height="240"></canvas>
-      <p class="caption">図 1：欠損波形（グレー）を生成 AI が補完（グリーン）</p>
     </section>
 
     <!-- ───────── 図2 ───────── -->
     <section>
       <p class="connector">しかし</p>
-      <h2>ブラックボックス問題のフロー</h2>
+      <h2>生成AIが出力した波形は生成プロセスが不明なので、医学、薬学分野で応用するには信頼度がたりない</h2>
 
       <svg id="flowSvg" viewBox="0 0 920 220" width="920" height="220">
         <defs>
@@ -93,15 +92,14 @@
                     class="mini-wave"/>
         </g>
       </svg>
-      <p class="caption">図 2：入力 → 生成モデル → 出力（モデル上に ? マーク）</p>
     </section>
 
     <!-- ───────── 図3 ───────── -->
     <section>
       <p class="connector">そのため</p>
-      <h2>重要領域ヒートマップ</h2>
+      <h2>AIが生成する際に重要視している部分の可視化を行う研究をしている</h2>
       <canvas id="attentionCanvas" width="800" height="240"></canvas>
-      <p class="caption">図 3：黄色が濃いほど生成に寄与した区間</p>
+      <p class="caption">黄色が濃いほど生成に寄与した区間</p>
     </section>
   </main>
 
