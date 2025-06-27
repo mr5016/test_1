@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <title>研究紹介 (ANN‑PK) | 松本崚佑</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Montserrat:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --primary:#2c3e50;
+      --accent:#e76f51;
+      --heat:#ffcc00;
+      --bg:#ecf0f1;
+      --dark:#1a1a1a;
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--dark)}
+    header,footer{background:var(--primary);color:#fff;text-align:center;padding:1rem 0}
+    main{max-width:1000px;margin:2rem auto;padding:0 1.5rem}
+    h1{margin:0;font-size:2.2rem;font-family:'Montserrat',sans-serif}
+    h2{margin:2rem 0 1rem;font-size:1.6rem;color:var(--primary)}
+    section{background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);margin-bottom:2.5rem}
+    canvas,svg{display:block;margin:1rem auto;max-width:100%;border:1px solid #ddd;border-radius:6px;background:#fff}
+    .caption{font-size:.9rem;color:#666;text-align:center}
+    .connector{font-weight:700;font-size:1rem;color:var(--primary);margin:0 0 .5rem}
+    .flow-part{opacity:0;transition:opacity .4s ease}
+  </style>
+</head>
+<body>
+  <header>
+    <h1>研究紹介 – ANN‑PK モデル</h1>
+    <nav><a href="index.html" style="color:#fff;text-decoration:none">← トップへ戻る</a></nav>
+  </header>
+
+  <main>
+    <!-- 1. ANN‑PK モデル -->
+    <section>
+      <h2>ANN‑PK モデルによる血中薬物濃度予測</h2>
+      <canvas id="pkCanvas" width="800" height="240"></canvas>
+      <p class="caption">図 1：身長・体重などのデータを入力し、ANN‑PK が血中濃度曲線を予測</p>
+    </section>
+
+    <!-- 2. 課題 -->
+    <section>
+      <p class="connector">しかし</p>
+      <h2>個体差・体調変動による誤差</h2>
+      <svg id="flowSvg" viewBox="0 0 900 220" width="900" height="220">
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="var(--primary)" />
+          </marker>
+          <style>
+            .box{fill:#cfcfcf;stroke:var(--primary);stroke-width:2}
+            .arrow{stroke:var(--primary);stroke-width:3;fill:none;marker-end:url(#arrow)}
+            text{fill:var(--primary);font-size:14px;font-family:'Noto Sans JP',sans-serif;text-anchor:middle;dominant-baseline:middle}
+          </style>
+        </defs>
+        <!-- 入力データ -->
+        <rect x="20" y="70" width="200" height="80" rx="8" class="box"/>
+        <text x="120" y="110">身長・体重&nbsp;etc.</text>
+        <!-- 矢印 -->
+        <line x1="220" y1="110" x2="400" y2="110" class="arrow flow-part" id="arrow1"/>
+        <!-- ANN‑PK -->
+        <rect x="400" y="50" width="160" height="120" rx="8" class="box flow-part" id="modelBox"/>
+        <text x="480" y="110">ANN‑PK</text>
+        <!-- 矢印 -->
+        <line x1="560" y1="110" x2="740" y2="110" class="arrow flow-part" id="arrow2"/>
+        <!-- 出力 -->
+        <rect x="740" y="70" width="140" height="80" rx="8" class="box flow-part" id="outBox"/>
+        <text x="810" y="110">濃度予測</text>
+      </svg>
+      <p class="caption">図 2：同じ入力でも体調・個体差で濃度は変化 ➜ モデルは考慮せず</p>
+    </section>
+
+    <!-- 3. 変動を組み込んだ拡張 -->
+    <section>
+      <p class="connector">そのため</p>
+      <h2>ランダム変動を組み込んだ ANN‑PK 拡張</h2>
+      <canvas id="varCanvas" width="800" height="240"></canvas>
+      <p class="caption">図 3：モデル内に確率的変動を加え、多様な濃度曲線を同時に予測</p>
+    </section>
+  </main>
+
+  <footer>© 2025 松本崚佑</footer>
+
+  <script>
+    /* ---------- 共通ヘルパ ---------- */
+    function pkCurve(t){ // 単純な1コンパートメント消失曲線 [µg/mL]
+      const ka=1.0, ke=0.05; // 吸収・消失速度
+      return 100*(Math.exp(-ke*t)-Math.exp(-ka*t));
+    }
+    const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    /* ---------- 図1：予測曲線 ---------- */
+    (function(){
+      const c=document.getElementById('pkCanvas');if(!c)return;const ctx=c.getContext('2d');const W=c.width,H=c.height,B=H-30;
+      const maxT=24;const pts=[];for(let i=0;i<=maxT*10;i++){const t=i/10, x=(W-60)*t/maxT+40, y=B-pkCurve(t);pts.push({x,y})}
+      function drawAxis(){ctx.clearRect(0,0,W,H);ctx.strokeStyle='#aaa';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40,B);ctx.lineTo(W-10,B);ctx.moveTo(40,20);ctx.lineTo(40,B);ctx.stroke();}
+      const dur=2000, wait=6000;
+      function loop(){drawAxis();const t0=performance.now();ctx.strokeStyle='#888';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);const frame=now=>{const pr=Math.min((now-t0)/dur,1),n=Math.floor(pr*pts.length); drawAxis();ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<n;i++){ctx.lineTo(pts[i].x,pts[i].y);}ctx.strokeStyle=ACCENT;ctx.stroke();if(pr<1)requestAnimationFrame(frame);else setTimeout(loop,wait)};requestAnimationFrame(frame)}loop();})();
+    /* ---------- 図2：フローアニメ ---------- */
+    (function(){const seq=['arrow1','modelBox','arrow2','outBox'];const delays=[0,600,1400,2200];const interval=12000;function reset(){seq.forEach(id=>{document.getElementById(id).style.opacity=0});}
+      function show(){seq.forEach((id,i)=>{setTimeout(()=>{document.getElementById(id).style.opacity=1;},delays[i]);});}
+      (function loop(){reset();setTimeout(show,300);setTimeout(loop,interval);})();})();
+    /* ---------- 図3：確率的曲線 ---------- */
+    (function(){const c=document.getElementById('varCanvas');if(!c)return;const ctx=c.getContext('2d');const W=c.width,H=c.height,B=H-30;const maxT=24;function axis(){ctx.clearRect(0,0,W,H);ctx.strokeStyle='#aaa';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(40,B);ctx.lineTo(W-10,B);ctx.moveTo(40,20);ctx.lineTo(40,B);ctx.stroke();}
+      const basePts=[];for(let i=0;i<=maxT*10;i++){const t=i/10, x=(W-60)*t/maxT+40, y=B-pkCurve(t);basePts.push({x,t})}
+      const dur=1800, wait=9000;
+      function drawCurve(arr,col){ctx.beginPath();ctx.moveTo(arr[0].x,arr[0].y);for(let i=1;i<arr.length;i++)ctx.lineTo(arr[i].x,arr[i].y);ctx.strokeStyle=col;ctx.lineWidth=1.6;ctx.stroke();}
+      function loop(){axis();const t0=performance.now();const frame=now=>{const pr=Math.min((now-t0)/dur,1),n=Math.floor(pr*basePts.length);axis();ctx.strokeStyle=ACCENT;ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(basePts[0].x,B-pkCurve(basePts[0].t));for(let i=1;i<n;i++){ctx.lineTo(basePts[i].x,B-pkCurve(basePts[i].t));}ctx.stroke();if(pr<1){requestAnimationFrame(frame);}else{ // 描画完了後、ランダムバリエーションを一気に描く
+          for(let k=0;k<6;k++){const offset=Math.random()*10-5;const pts=basePts.map(p=>({x:p.x,y:B-(pkCurve(p.t)*(1+offset/100))}));drawCurve(pts,'rgba(245,196,0,0.5)');}
+          setTimeout(loop,wait);
+        }};requestAnimationFrame(frame);}loop();})();
+  </script>
+</body>
+</html>
