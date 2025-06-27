@@ -11,106 +11,229 @@
     :root{
       --primary:#2c3e50;
       --accent:#18bc9c;
-      --heat:#f5c400;
+      --heat:#f5c400;     /* ヒートマップ黄色 */
       --bg:#ecf0f1;
-      --white:#ffffff;
       --dark:#1a1a1a;
     }
-    *,*::before,*::after{box-sizing:border-box;}
-    body{margin:0;font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--dark);}  
-    header,footer{background:var(--primary);color:#fff;text-align:center;padding:1rem 0;}
-    a{color:var(--accent);text-decoration:none;}
-    main{max-width:1000px;margin:2rem auto;padding:0 1.5rem;}
-    h1{margin:0;font-size:2.2rem;font-family:'Montserrat',sans-serif;}
-    h2{margin:2rem 0 1rem;font-size:1.6rem;color:var(--primary);}    
-    section{background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);margin-bottom:2.5rem;position:relative;}
-    canvas,svg{display:block;margin:1rem auto;max-width:100%;border:1px solid #ddd;border-radius:6px;background:#fff;}
-    .caption{font-size:.9rem;color:#666;text-align:center;}
-    .flow-part{opacity:0;transition:opacity .4s ease;}
-    .mini-wave{stroke:#fff;stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round;}
-    .connector{font-weight:700;font-size:1rem;color:var(--primary);margin:0 0 .5rem;}
+    *,*::before,*::after{box-sizing:border-box}
+    body{margin:0;font-family:"Noto Sans JP",sans-serif;background:var(--bg);color:var(--dark)}
+    header,footer{background:var(--primary);color:#fff;text-align:center;padding:1rem 0}
+    main{max-width:1000px;margin:2rem auto;padding:0 1.5rem}
+    h1{margin:0;font-size:2.2rem;font-family:'Montserrat',sans-serif}
+    h2{margin:2rem 0 1rem;font-size:1.6rem;color:var(--primary)}
+    section{background:#fff;padding:1.5rem 2rem;border-radius:8px;box-shadow:0 4px 10px rgba(0,0,0,.05);margin-bottom:2.5rem}
+    canvas,svg{display:block;margin:1rem auto;max-width:100%;border:1px solid #ddd;border-radius:6px;background:#fff}
+    .caption{font-size:.9rem;color:#666;text-align:center}
+    .connector{font-weight:700;font-size:1rem;color:var(--primary);margin:0 0 .5rem}
+    /* Flow animation パーツ */
+    .flow-part{opacity:0;transition:opacity .4s ease}
+    .mini-wave{stroke:#fff;stroke-width:2;fill:none;stroke-linejoin:round;stroke-linecap:round}
   </style>
 </head>
 <body>
   <header>
     <h1>研究紹介</h1>
-    <nav><a href="index.html">← トップへ戻る</a></nav>
+    <nav><a href="index.html" style="color:#fff;text-decoration:none">← トップへ戻る</a></nav>
   </header>
-  <main>
 
-    <!-- Figure 1 -->
+  <main>
+    <!-- ───────── 図1 ───────── -->
     <section>
       <h2>心電図欠損補完アニメーション</h2>
       <canvas id="ecgCanvas" width="800" height="240"></canvas>
-      <p class="caption">図 1：欠損波形（グレー）を生成 AI が補完（グリーン）するアニメーション</p>
+      <p class="caption">図 1：欠損波形（グレー）を生成 AI が補完（グリーン）</p>
     </section>
 
-    <!-- Figure 2 -->
+    <!-- ───────── 図2 ───────── -->
     <section>
       <p class="connector">しかし</p>
       <h2>ブラックボックス問題のフロー</h2>
+
       <svg id="flowSvg" viewBox="0 0 920 220" width="920" height="220">
         <defs>
           <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
-            <polygon points="0 0, 10 3.5, 0 7" fill="var(--primary)" />
+            <polygon points="0 0, 10 3.5, 0 7" fill="var(--primary)"/>
           </marker>
           <style>
-            .rect-in{fill:#cfcfcf;} .rect-model{fill:var(--primary);} .rect-out{fill:var(--accent);} 
-            .arrow{stroke:var(--primary);stroke-width:3;fill:none;marker-end:url(#arrowhead);} 
-            text{fill:#fff;font-size:14px;font-family:'Noto Sans JP',sans-serif;dominant-baseline:middle;text-anchor:middle;}
+            .rect-in{fill:#cfcfcf}
+            .rect-model{fill:var(--primary)}
+            .rect-out{fill:var(--accent)}
+            .arrow{stroke:var(--primary);stroke-width:3;fill:none;marker-end:url(#arrowhead)}
+            text{fill:#fff;font-size:14px;font-family:'Noto Sans JP',sans-serif;dominant-baseline:middle;text-anchor:middle}
           </style>
         </defs>
+
+        <!-- 入力 -->
         <g id="inputGroup" class="flow-part">
-          <rect x="20" y="60" width="220" height="100" rx="8" class="rect-in" />
+          <rect x="20" y="60" width="220" height="100" rx="8" class="rect-in"/>
           <text x="130" y="95">入力 ECG</text>
-          <polyline points="40,130 60,100 80,160 100,40 120,180 140,130 160,110 180,110 200,130" class="mini-wave" />
+          <polyline points="40,130 60,100 80,160 100,40 120,180 140,130 160,110 180,110 200,130"
+                    class="mini-wave"/>
         </g>
-        <line id="arrow1" x1="240" y1="110" x2="400" y2="110" class="arrow flow-part" />
+
+        <!-- 矢印1 -->
+        <line id="arrow1" x1="240" y1="110" x2="400" y2="110" class="arrow flow-part"/>
+
+        <!-- モデル -->
         <g id="modelGroup" class="flow-part">
-          <rect x="400" y="50" width="160" height="120" rx="8" class="rect-model" />
+          <rect x="400" y="50" width="160" height="120" rx="8" class="rect-model"/>
           <text x="480" y="95">生成モデル</text>
           <text x="480" y="120">(ブラックボックス)</text>
           <text id="qMark" x="480" y="35" font-size="28" fill="#fff" opacity="0">?</text>
         </g>
-        <line id="arrow2" x1="560" y1="110" x2="720" y2="110" class="arrow flow-part" />
+
+        <!-- 矢印2 -->
+        <line id="arrow2" x1="560" y1="110" x2="720" y2="110" class="arrow flow-part"/>
+
+        <!-- 出力 -->
         <g id="outputGroup" class="flow-part">
-          <rect x="720" y="60" width="220" height="100" rx="8" class="rect-out" />
+          <rect x="720" y="60" width="220" height="100" rx="8" class="rect-out"/>
           <text x="830" y="95">欠損部 ECG</text>
-          <polyline points="740,130 760,100 780,160 800,40 820,180 840,130 860,110 880,110 900,130" class="mini-wave" />
+          <polyline points="740,130 760,100 780,160 800,40 820,180 840,130 860,110 880,110 900,130"
+                    class="mini-wave"/>
         </g>
       </svg>
-      <p class="caption">図 2：入力 → 生成モデル → 出力 を順番に表示し、モデル処理時に ? マークでブラックボックス性を強調</p>
+      <p class="caption">図 2：入力 → 生成モデル → 出力（モデル上に ? マーク）</p>
     </section>
 
-    <!-- Figure 3 -->
+    <!-- ───────── 図3 ───────── -->
     <section>
       <p class="connector">そのため</p>
       <h2>重要領域ヒートマップ</h2>
       <canvas id="attentionCanvas" width="800" height="240"></canvas>
-      <p class="caption">図 3：黄色が濃い部分ほど生成に寄与したと推定される区間</p>
+      <p class="caption">図 3：黄色が濃いほど生成に寄与した区間</p>
     </section>
-
   </main>
+
   <footer>© 2025 松本崚佑</footer>
 
+  <!-- ───────── JavaScript ───────── -->
   <script>
-    const ACCENT=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const ACCENT = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const HEAT   = getComputedStyle(document.documentElement).getPropertyValue('--heat').trim();
 
-    /* ECG helper */
-    function ecgShape(p){ if(p<6) return 6*Math.sin((p/6)*Math.PI); else if(p<9) return -10*(p-6); else if(p<12) return 0; else if(p<14) return -60*(p-12)/2; else if(p<15) return 180*(p-14)-60; else if(p<16) return -120*(p-15)+120; else if(p<22) return 0; else if(p<32) return 60*Math.sin(((p-22)/10)*Math.PI); else return 0; }
+    /* ECG 波形関数（簡易） */
+    function ecgShape(p){  // p:0-100
+      if(p<6)  return  6*Math.sin((p/6)*Math.PI);
+      if(p<9)  return -10*(p-6);
+      if(p<12) return 0;
+      if(p<14) return -60*(p-12)/2;
+      if(p<15) return 180*(p-14)-60;
+      if(p<16) return -120*(p-15)+120;
+      if(p<22) return 0;
+      if(p<32) return  60*Math.sin(((p-22)/10)*Math.PI);
+      return 0;
+    }
 
-    /* Figure 1 */
-    (function(){const c=document.getElementById('ecgCanvas');if(!c)return;const ctx=c.getContext('2d');const W=c.width,H=c.height,B=H/2;const cyc=250;const pts=[];for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100;pts.push({x,y:B-ecgShape(p)});}const st=230,en=380,dur=2000,wait=6000;function drawBase(){ctx.clearRect(0,0,W,H);ctx.lineWidth=2;ctx.strokeStyle='#c0c0c0';ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(let i=1;i<pts.length;i++){if(i===st){ctx.stroke();ctx.beginPath();ctx.moveTo(pts[en].x,pts[en].y);continue;}if(i>st&&i<en)continue;ctx.lineTo(pts[i].x,pts[i].y);}ctx.stroke();}
-      function animate(){drawBase();const t0=performance.now();function frame(now){const pr=Math.min((now-t0)/dur,1);const len=Math.floor(pr*(en-st));ctx.clearRect(st-2,0,(en-st)+4,H);ctx.lineWidth=2;ctx.strokeStyle=ACCENT;ctx.beginPath();ctx.moveTo(pts[st].x,pts[st].y);for(let i=1;i<=len;i++)ctx.lineTo(pts[st+i].x,pts[st+i].y);ctx.stroke();if(pr<1)requestAnimationFrame(frame);else setTimeout(animate,wait);}requestAnimationFrame(frame);}animate();})();
+    /* ---------- 図1：欠損補完アニメ ---------- */
+    (()=>{
+      const c=document.getElementById('ecgCanvas'); if(!c) return;
+      const ctx=c.getContext('2d'), W=c.width, H=c.height, B=H/2;
+      const cyc=250, pts=[], st=230, en=380, dur=2000, wait=6000;
+      for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100; pts.push({x,y:B-ecgShape(p)})}
 
-    /* Figure 3 */
-    (function(){const c=document.getElementById('attentionCanvas');if(!c)return;const ctx=c.getContext('2d');const W=c.width,H=c.height,B=H/2;const cyc=250;const pts=[];for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100;pts.push({x,y:B-ecgShape(p)});}const st=230,en=380,dur=1800,wait=9000;function drawWave(){ctx.lineWidth=1.6;ctx.strokeStyle='#666';ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);for(const p of pts)ctx.lineTo(p.x,p.y);ctx.stroke();}
-      function drawHeat(){const wts=new Array(pts.length).fill(0);for(let i=0;i<pts.length;i+=4){if(i<st-20||i>en+20){if(Math.random()<0.06)wts[i]=0.2+0.8*Math.random();}}const max=Math.max(...wts);for(let i=0;i<pts.length;i+=4){if(wts[i]>0){const a=(wts[i]/max)*0.55;ctx.fillStyle=`rgba(245,196,0,${a})`;ctx.fillRect(pts[i].x-2,0,4,H);}}}
-      function animate(){ctx.clearRect(0,0,W,H);drawWave();const t0=performance.now();function frame(now){const pr=Math.min((now-t0)/dur,1);const len=Math.floor(pr*(en-st));ctx.clearRect(st-2,0,(en-st)+4,H);ctx.lineWidth=2.8;ctx.strokeStyle=ACCENT;ctx.beginPath();ctx.moveTo(pts[st].x,pts[st].y);for(let i=1;i<=len;i++)ctx.lineTo(pts[st+i].x,pts[st+i].y);ctx.stroke();if(pr<1){requestAnimationFrame(frame);}else{drawHeat();setTimeout(animate,wait);}}requestAnimationFrame(frame);}animate();})();
+      function drawBase(){
+        ctx.clearRect(0,0,W,H);
+        ctx.lineWidth=2; ctx.strokeStyle='#c0c0c0';
+        ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+        for(let i=1;i<pts.length;i++){
+          if(i===st){ctx.stroke();ctx.beginPath();ctx.moveTo(pts[en].x,pts[en].y);continue;}
+          if(i>st&&i<en) continue;
+          ctx.lineTo(pts[i].x,pts[i].y);
+        }
+        ctx.stroke();
+      }
 
-    /* Figure 2 Flow */
-    (function(){const order=['inputGroup','arrow1','modelGroup','arrow2','outputGroup'];const delays=[0,600,1200,2200,2800];const interval=12000;const q=document.getElementById('qMark');function hideAll(){order.forEach(id=>document.getElementById(id).style.opacity=0);q.style.opacity=0;}function showSeq(){order.forEach((id,i)=>{setTimeout(()=>{const el=document.getElementById(id);el.style.opacity=1;if(id==='modelGroup'){q.style.opacity=1;setTimeout(()=>q.style.opacity=0,700);}},delays[i]);});}
-      function loop(){hideAll();setTimeout(()=>{showSeq();},200);setTimeout(loop,interval);}loop();})();
+      function loop(){
+        drawBase();
+        const t0=performance.now();
+        const frame=now=>{
+          const pr=Math.min((now-t0)/dur,1);
+          const len=Math.floor(pr*(en-st));
+          ctx.clearRect(st-2,0,(en-st)+4,H);
+          ctx.lineWidth=2; ctx.strokeStyle=ACCENT;
+          ctx.beginPath(); ctx.moveTo(pts[st].x,pts[st].y);
+          for(let i=1;i<=len;i++) ctx.lineTo(pts[st+i].x,pts[st+i].y);
+          ctx.stroke();
+          if(pr<1) requestAnimationFrame(frame);
+          else     setTimeout(loop,wait);
+        };
+        requestAnimationFrame(frame);
+      }
+      loop();
+    })();
+
+    /* ---------- 図2：フローアニメ ---------- */
+    (()=>{
+      const ids=['inputGroup','arrow1','modelGroup','arrow2','outputGroup'];
+      const delays=[0,600,1200,2200,2800];
+      const interval=12000;
+      const q=document.getElementById('qMark');
+
+      function hideAll(){ ids.forEach(id=>document.getElementById(id).style.opacity=0); q.style.opacity=0; }
+      function showSeq(){
+        ids.forEach( (id,i)=>{
+          setTimeout(()=>{
+            document.getElementById(id).style.opacity=1;
+            if(id==='modelGroup'){ q.style.opacity=1; setTimeout(()=>q.style.opacity=0,700); }
+          },delays[i]);
+        });
+      }
+      (function loop(){
+        hideAll();
+        setTimeout(showSeq,200);
+        setTimeout(loop,interval);
+      })();
+    })();
+
+    /* ---------- 図3：生成後にヒートマップ ---------- */
+    (()=>{
+      const c=document.getElementById('attentionCanvas'); if(!c) return;
+      const ctx=c.getContext('2d'), W=c.width, H=c.height, B=H/2;
+      const cyc=250, pts=[], st=230, en=380, dur=1800, wait=9000;
+      for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100; pts.push({x,y:B-ecgShape(p)})}
+
+      function drawWave(){
+        ctx.lineWidth=1.6; ctx.strokeStyle='#666';
+        ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+        for(const p of pts) ctx.lineTo(p.x,p.y);
+        ctx.stroke();
+      }
+
+      function drawHeat(){
+        const wts=new Array(pts.length).fill(0);
+        for(let i=0;i<pts.length;i+=4){
+          if(i<st-20||i>en+20) if(Math.random()<0.06) wts[i]=0.2+0.8*Math.random();
+        }
+        const max=Math.max(...wts);
+        for(let i=0;i<pts.length;i+=4){
+          if(wts[i]>0){
+            const a=(wts[i]/max)*0.55;
+            ctx.fillStyle=`rgba(245,196,0,${a})`;
+            ctx.fillRect(pts[i].x-2,0,4,H);
+          }
+        }
+      }
+
+      function loop(){
+        ctx.clearRect(0,0,W,H);
+        drawWave();
+        const t0=performance.now();
+        const frame=now=>{
+          const pr=Math.min((now-t0)/dur,1);
+          const len=Math.floor(pr*(en-st));
+          ctx.clearRect(st-2,0,(en-st)+4,H);
+          ctx.lineWidth=2.8; ctx.strokeStyle=ACCENT;
+          ctx.beginPath(); ctx.moveTo(pts[st].x,pts[st].y);
+          for(let i=1;i<=len;i++) ctx.lineTo(pts[st+i].x,pts[st+i].y);
+          ctx.stroke();
+          if(pr<1) requestAnimationFrame(frame);
+          else{ drawHeat(); setTimeout(loop,wait); }
+        };
+        requestAnimationFrame(frame);
+      }
+      loop();
+    })();
   </script>
 </body>
 </html>
