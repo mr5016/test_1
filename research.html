@@ -107,11 +107,19 @@
 
   <!-- ───────── JavaScript ───────── -->
   <script>
-    const ACCENT = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
-    const HEAT   = getComputedStyle(document.documentElement).getPropertyValue('--heat').trim();
+    /* --------------------------------------------------
+       共通定数
+    -------------------------------------------------- */
+    const ACCENT     = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const HEAT_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--heat').trim();
+    const CYCLE      = 6000;   // 全アニメーション共通周期 (ms)
+    const WAVE_TIME  = 1700;   // 図3 波形描画時間
+    const SCAN_TIME  = 2800;   // 図3 虫眼鏡走査時間
 
-    /* ECG 波形関数（簡易） */
-    function ecgShape(p){  // p:0-100
+    /* --------------------------------------------------
+       簡易 ECG 形状関数 (p:0-100)
+    -------------------------------------------------- */
+    function ecgShape(p){
       if(p<6)  return  6*Math.sin((p/6)*Math.PI);
       if(p<9)  return -10*(p-6);
       if(p<12) return 0;
@@ -123,14 +131,16 @@
       return 0;
     }
 
-    /* ---------- 図1：欠損補完アニメ ---------- */
+    /* --------------------------------------------------
+       図1：欠損補完アニメーション
+    -------------------------------------------------- */
     (()=>{
       const c=document.getElementById('ecgCanvas'); if(!c) return;
       const ctx=c.getContext('2d'), W=c.width, H=c.height, B=H/2;
-      const cyc=250, pts=[], st=230, en=380, dur=2000, wait=6000;
+      const cyc=250, pts=[], st=230, en=380; // 欠損区間 x-index
       for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100; pts.push({x,y:B-ecgShape(p)})}
 
-      function drawBase(){
+      const drawBase=()=>{
         ctx.clearRect(0,0,W,H);
         ctx.lineWidth=2; ctx.strokeStyle='#c0c0c0';
         ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
@@ -140,98 +150,114 @@
           ctx.lineTo(pts[i].x,pts[i].y);
         }
         ctx.stroke();
-      }
+      };
 
-      function loop(){
+      function render(){
+        const t=(performance.now()%CYCLE);
         drawBase();
-        const t0=performance.now();
-        const frame=now=>{
-          const pr=Math.min((now-t0)/dur,1);
-          const len=Math.floor(pr*(en-st));
-          ctx.clearRect(st-2,0,(en-st)+4,H);
-          ctx.lineWidth=2; ctx.strokeStyle=ACCENT;
-          ctx.beginPath(); ctx.moveTo(pts[st].x,pts[st].y);
-          for(let i=1;i<=len;i++) ctx.lineTo(pts[st+i].x,pts[st+i].y);
-          ctx.stroke();
-          if(pr<1) requestAnimationFrame(frame);
-          else     setTimeout(loop,wait);
-        };
-        requestAnimationFrame(frame);
+
+        // 補完波形描画
+        let pr=Math.min(t/2000,1); // 2秒で描写完了
+        const len=Math.floor(pr*(en-st));
+        ctx.lineWidth=2; ctx.strokeStyle=ACCENT;
+        ctx.beginPath(); ctx.moveTo(pts[st].x,pts[st].y);
+        for(let i=1;i<=len;i++) ctx.lineTo(pts[st+i].x,pts[st+i].y);
+        ctx.stroke();
+        requestAnimationFrame(render);
       }
-      loop();
+      render();
     })();
 
-    /* ---------- 図2：フローアニメ ---------- */
+    /* --------------------------------------------------
+       図2：ブラックボックスフロー
+    -------------------------------------------------- */
     (()=>{
       const ids=['inputGroup','arrow1','modelGroup','arrow2','outputGroup'];
       const delays=[0,600,1200,2200,2800];
-      const interval=12000;
       const q=document.getElementById('qMark');
-
-      function hideAll(){ ids.forEach(id=>document.getElementById(id).style.opacity=0); q.style.opacity=0; }
-      function showSeq(){
-        ids.forEach( (id,i)=>{
-          setTimeout(()=>{
-            document.getElementById(id).style.opacity=1;
-            if(id==='modelGroup'){ q.style.opacity=1; setTimeout(()=>q.style.opacity=0,700); }
-          },delays[i]);
+      function render(){
+        const t=(performance.now()%CYCLE);
+        ids.forEach((id,i)=>{
+          const el=document.getElementById(id);
+          const on=(t>delays[i])&&(t<delays[i]+1000);
+          el.style.opacity=on?1:0;
         });
+        // はてな瞬き
+        const qmOn=(t>1200&&t<1900);
+        q.style.opacity=qmOn?1:0;
+        requestAnimationFrame(render);
       }
-      (function loop(){
-        hideAll();
-        setTimeout(showSeq,200);
-        setTimeout(loop,interval);
-      })();
+      render();
     })();
 
-    /* ---------- 図3：生成後にヒートマップ ---------- */
+    /* --------------------------------------------------
+       図3：虫眼鏡スキャン + ヒートマップ
+    -------------------------------------------------- */
     (()=>{
       const c=document.getElementById('attentionCanvas'); if(!c) return;
       const ctx=c.getContext('2d'), W=c.width, H=c.height, B=H/2;
-      const cyc=250, pts=[], st=230, en=380, dur=1800, wait=9000;
-      for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100; pts.push({x,y:B-ecgShape(p)})}
+      const cyc=250, pts=[]; for(let x=0;x<=W;x++){const p=((x%cyc)/cyc)*100; pts.push({x,y:B-ecgShape(p)})}
 
-      function drawWave(){
+      // 任意重みを作成 (欠損区間以外)
+      const wts=new Array(pts.length).fill(0);
+      for(let i=0;i<pts.length;i+=4){ if(Math.random()<0.06) wts[i]=0.2+0.8*Math.random(); }
+      const maxWt=Math.max(...wts);
+
+      const drawWaveBase=()=>{
         ctx.lineWidth=1.6; ctx.strokeStyle='#666';
         ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
         for(const p of pts) ctx.lineTo(p.x,p.y);
         ctx.stroke();
-      }
+      };
 
-      function drawHeat(){
-        const wts=new Array(pts.length).fill(0);
+      const drawHeatUpTo=xPos=>{
         for(let i=0;i<pts.length;i+=4){
-          if(i<st-20||i>en+20) if(Math.random()<0.06) wts[i]=0.2+0.8*Math.random();
-        }
-        const max=Math.max(...wts);
-        for(let i=0;i<pts.length;i+=4){
-          if(wts[i]>0){
-            const a=(wts[i]/max)*0.55;
-            ctx.fillStyle=`rgba(245,196,0,${a})`;
+          if(pts[i].x<=xPos && wts[i]>0){
+            const alpha=(wts[i]/maxWt)*0.55;
+            ctx.fillStyle=`rgba(245,196,0,${alpha})`;
             ctx.fillRect(pts[i].x-2,0,4,H);
           }
         }
-      }
+      };
 
-      function loop(){
+      const lensRadius=40;
+
+      function render(){
+        const t=(performance.now()%CYCLE);
         ctx.clearRect(0,0,W,H);
-        drawWave();
-        const t0=performance.now();
-        const frame=now=>{
-          const pr=Math.min((now-t0)/dur,1);
-          const len=Math.floor(pr*(en-st));
-          ctx.clearRect(st-2,0,(en-st)+4,H);
+        drawWaveBase();
+
+        if(t<WAVE_TIME){
+          // Accent 波形進行
+          const pr=t/WAVE_TIME;
+          const endIdx=Math.floor(pr*pts.length);
           ctx.lineWidth=2.8; ctx.strokeStyle=ACCENT;
-          ctx.beginPath(); ctx.moveTo(pts[st].x,pts[st].y);
-          for(let i=1;i<=len;i++) ctx.lineTo(pts[st+i].x,pts[st+i].y);
+          ctx.beginPath(); ctx.moveTo(pts[0].x,pts[0].y);
+          for(let i=1;i<=endIdx;i++) ctx.lineTo(pts[i].x,pts[i].y);
           ctx.stroke();
-          if(pr<1) requestAnimationFrame(frame);
-          else{ drawHeat(); setTimeout(loop,wait); }
-        };
-        requestAnimationFrame(frame);
+        } else if(t<WAVE_TIME+SCAN_TIME){
+          // 虫眼鏡スキャン
+          const pr=(t-WAVE_TIME)/SCAN_TIME;
+          const scanX=pr*W;
+          // ヒートマップ描画（通過済み領域）
+          drawHeatUpTo(scanX-lensRadius);
+
+          // Lens 描画
+          ctx.save();
+          ctx.lineWidth=3; ctx.strokeStyle=ACCENT;
+          ctx.beginPath();
+          ctx.arc(scanX, B, lensRadius, 0, 2*Math.PI);
+          ctx.stroke();
+          ctx.restore();
+        } else {
+          // 全面ヒート
+          drawHeatUpTo(W);
+        }
+        requestAnimationFrame(render);
       }
-      loop();
+      render();
     })();
+
   </script>
 </body>
 </html>
